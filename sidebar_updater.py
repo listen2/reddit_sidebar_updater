@@ -1,6 +1,5 @@
 import html.parser
 import time
-#import socket
 import httplib2
 from xml.dom.minidom import parseString
 from threading import Thread
