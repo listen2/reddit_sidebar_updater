@@ -15,40 +15,6 @@ if "/srv/bots/common/praw" not in sys.path:
 	sys.path.insert(0, "/srv/bots/common/praw")
 import praw
 
-def time_left(now):
-	end = 1339736400 #Midnight 15 June (EDT, but close enough)
-	secs = int(end - now)
-	days = (secs / 86400) + 1 #+1 to correct off-by-one from truncating
-	#secs -= days * 86400
-	#hours = int(secs / 3600)
-	#secs -= hours * 3600
-	#mins = int(secs / 60)
-	#secs -= mins * 60
-	if days == 0:
-		return 'no longer required!'
-	else:
-		return 'required for the next %i days' % days
-
-"""
-class BNetChecker(Thread):
-	""
-	Checks whether the D3 beta realm is up, and if not, gets the message.
-	""
-	def run(self):
-		#TODO this shit is all broken. Do it the right way by actually following the bnet protocol.
-		lelf.battlenetStatus = 'Diablo III beta server status: [Online](/bnetOnline)\n\n'
-		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		try:
-			sock.connect(('beta.actual.battle.net', 1119))
-		except socket.error as e:
-			self.battlenetStatus = 'Diablo III beta server status: [Offline](/bnetOffline)\n\n'
-			h = httplib2.Http(".cache")
-			resp, alertMessage = h.request('http://us.launcher.battle.net/service/d3/alert/en-us', "GET")
-			self.battlenetStatus += '------------------\n\n' + alertMessage + '\n\n-----------------\n\n'
-		else:
-			sock.close()
-"""
-
 class BNetChecker(Thread):
 	"""
 	Checks whether the D3 beta realm is up, and if not, gets the message.
@@ -63,9 +29,6 @@ class BNetChecker(Thread):
 	def run(self):
 		h = httplib2.Http(".cache")
 		resp, html = h.request("http://us.battle.net/d3/en/status", "GET")
-
-		#infile = open("status", "r")
-		#_status_dom = parseString(infile.read())
 		_status_dom = parseString(html)
 
 		#resp, html = h.request("http://us.launcher.battle.net/d3/en-us/patch?patchVersion=0", "GET")
@@ -104,32 +67,6 @@ class BNetChecker(Thread):
 				return
 
 '''
-class InstallChecker(Thread):
-	"""
-	Checks whether the D3 installer is unlocked in each region.
-	"""
-	def run(self):
-		mediaKeys = ["enUS", "enGB", "esMX", "ptBR", "deDE", "esES", "frFR", "itIT", "plPL", "ruRU", "koKR", "zhTW", "zhCN", "enSG", "trTR"]
-		cols = 5
-
-		self.installationStats = 'Diablo 3 Installation Availability:\n\n'
-
-		left = 0
-		for keyURL in mediaKeys:
-			h = httplib2.Http(".cache")
-			resp, html = h.request("http://us.battle.net/static/mediakey/d3-authenticationcode-%s.txt" % keyURL, "GET")
-			resp, html = h.request("http://dist.blizzard.com/mediakey/d3-authenticationcode-%s.txt" % keyURL, "GET")
-			self.installationStats += '[**%s**](/smallText) ' % keyURL[2:]
-			self.installationStats += '[](/bnetOffline)' if html[0:3] == b"\xef\xbb\xbf" else '[](/bnetOnline)'
-
-			left += 1
-			self.installationStats += '\n' if left % cols == 0 else '|'
-
-			if left == cols:
-				self.installationStats += '|'.join(['--:' for f in range(0, cols)]) + '\n'
-'''
-
-'''
 class SlashdiabloChecker(Thread):
 	"""
 	Gets the number of users and games from slashdiablo
@@ -160,7 +97,6 @@ threads = {}
 threads['bnet'] = BNetChecker()
 #threads['slashdiablo'] = SlashdiabloChecker()
 threads['mumble'] = MumbleChecker()
-#threads['install'] = InstallChecker()
 
 for t in threads:
 	threads[t].start()
@@ -180,16 +116,6 @@ subr_desc = subr_info['description'][(subr_info['description'].find(sentinel)+le
 HP = html.parser.HTMLParser()
 subr_desc = HP.unescape(subr_desc)
 
-# Calculate time until release.
-#secs = int(1337065200 - time.time())+3600 # 15 May 2012 00:00:00 PDT # Add 3600 because it truncates; this simulates a round up.
-#now = time.time()
-#releaseDateCounter = '[Spoiler tags %s](/releaseCountdown)\n\n' % time_left(now)
-#percentage = int(((now - 1337065200) / (2592000)) * 10)*10
-#releaseDateCounter += '[' + str(percentage) + '%](/' + str(percentage) + 'p)[' + str(100-percentage) + '%](/' + str(100-percentage) + 'n)\n\n'
-
-#releaseDateCounter += '[Diablo 3 Europe ' + time_left('eu') + '](/releaseCountdown)\n\n'
-#releaseDateCounter += '[Diablo 3 Asia ' + time_left('sea') + '](/releaseCountdown)\n\n'
-
 with open('/tmp/irc_diablo_size', 'r') as f:
 	irc_size = f.read()
 
@@ -200,7 +126,6 @@ for t in threads:
 	threads[t].join()
 
 # Update subreddit description
-#newDescription = bnetThread.status + mumbleThread.info + slashdiabloThread.info + lastUpdated + str(sentinel) + subr_desc
 newDescription = Template("""Diablo III game server status
 
 ${am}${eu}${asia}
