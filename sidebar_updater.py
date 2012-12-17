@@ -7,6 +7,7 @@ from string import Template
 
 sentinel = '[~s~](/s)'
 subr_name = 'diablo'
+credentials_file = "/home/listen2/login_creds"
 
 #TODO this will be unnecessary after we set $PYTHONPATH
 import sys
@@ -101,13 +102,15 @@ for t in threads:
 
 # Create reddit object and login
 r = praw.Reddit(user_agent='/r/diablo sidebar updater [mellort python module]')
-with open('/home/listen2/gharbad_pass', 'r') as f:
-	p = f.read().rstrip()
-r.login('GharbadTheWeak', p)
+with open(credentials_file, 'r') as f:
+	user = f.read().rstrip()
+	passwd = f.read().rstrip()
+r.login(user, passwd)
+
 subreddit = r.get_subreddit(subr_name)
 
 # Grab current settings
-subr_info = subreddit.get_settings() # this broke for some reason
+subr_info = subreddit.get_settings()
 subr_desc = subr_info['description'][(subr_info['description'].find(sentinel)+len(sentinel)):]
 
 # There has to be a way to get rid of the HTMLParser ;__;
