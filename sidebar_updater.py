@@ -101,7 +101,7 @@ for t in threads:
 	threads[t].start()
 
 # Create reddit object and login
-r = praw.Reddit(user_agent="/r/diablo sidebar updater [mellort python module]")
+r = praw.Reddit(user_agent="/r/%s sidebar updater; PRAW. Contact /u/listen2]" % (subr_name))
 with open(credentials_file, "r") as f:
 	user = f.read().rstrip()
 	passwd = f.read().rstrip()
