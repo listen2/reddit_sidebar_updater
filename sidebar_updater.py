@@ -159,7 +159,7 @@ $lastUpdated
 
 * [Mumble](http://tinyurl.com/7ulkl6l) ($mumble_users/$mumble_max users)
 
-* [Slashdiablo](/r/slashdiablo) (server info unavailable)
+* [Slashdiablo](/r/slashdiablo)
 
 * [How to get Battletag flair](/qyfqt)
 
