@@ -5,8 +5,8 @@ from xml.dom.minidom import parseString
 from threading import Thread
 from string import Template
 
-sentinel = '[~s~](/s)'
-subr_name = 'diablo'
+sentinel = "[~s~](/s)"
+subr_name = "diablo"
 credentials_file = "/home/listen2/login_creds"
 
 #TODO this will be unnecessary after we set $PYTHONPATH
@@ -23,7 +23,7 @@ class BNetChecker(Thread):
 		msg = msg.replace("\n\n", "—", 1)
 		msg = msg.replace("\n\n", "\n")
 		if len(msg) > 300:
-			return "[%s...](/smallText) [Read more](%s)" % (msg[:301].rsplit(' ', 1)[0], more)
+			return "[%s...](/smallText) [Read more](%s)" % (msg[:301].rsplit(" ", 1)[0], more)
 		return msg
 
 	def run(self):
@@ -52,13 +52,13 @@ class BNetChecker(Thread):
 		status_response["am"] = b.childNodes[1].childNodes[1].childNodes[3].childNodes[1].childNodes[1]._attrs["class"].nodeValue.split()[1]
 		status_response["eu"] = b.childNodes[3].childNodes[1].childNodes[3].childNodes[1].childNodes[1]._attrs["class"].nodeValue.split()[1]
 		status_response["as"] = b.childNodes[5].childNodes[1].childNodes[3].childNodes[1].childNodes[1]._attrs["class"].nodeValue.split()[1]
-		self.am = 'AM: ' + ('[online](/bnetOnline "' + bnet_build['enus'] + ', ' + client_build['enus'] + '")') if status_response["am"] == 'up' else '[Offline](/bnetOffline)'
-		self.eu = '|EU: ' + (('[online](/bnetOnline "' + bnet_build['engb'] + ', ' + client_build['engb'] + '")') if status_response["eu"] == 'up' else '[Offline](/bnetOffline)')
-		self.asia = '|AS: ' + (('[online](/bnetOnline "' + bnet_build['zhtw'] + ', ' + client_build['zhtw'] + '")') if status_response["as"] == 'up' else '[Offline](/bnetOffline)')
+		self.am = "AM: " + ("[online](/bnetOnline '" + bnet_build["enus"] + ", " + client_build["enus"] + "')") if status_response["am"] == "up" else "[Offline](/bnetOffline)"
+		self.eu = "|EU: " + (("[online](/bnetOnline '" + bnet_build["engb"] + ", " + client_build["engb"] + "')") if status_response["eu"] == "up" else "[Offline](/bnetOffline)")
+		self.asia = "|AS: " + (("[online](/bnetOnline '" + bnet_build["zhtw"] + ", " + client_build["zhtw"] + "')") if status_response["as"] == "up" else "[Offline](/bnetOffline)")
 
 		self.status = ""
 		for r in ["am", "eu", "as"]:
-			if not status_response[r] == 'up':
+			if not status_response[r] == "up":
 				resp, alertMessage = h.request(other_regions[r]["url"], "GET")
 				if len(alertMessage) > 10:
 					alertMessage = self.trunc(alertMessage.decode("utf8"), other_regions[r]["url"])
@@ -73,7 +73,7 @@ class SlashdiabloChecker(Thread):
 	def run(self):
 		self.info = "[Slashdiablo](/r/slashdiablo) (server info unavailable)\n\n---\n\n"
 		h = httplib2.Http(".cache")
-		resp, html = h.request("http://ewalk0871.no-ip.org:8080/server.dat", "GET", headers={'Range': 'bytes=0-150'})
+		resp, html = h.request("http://ewalk0871.no-ip.org:8080/server.dat", "GET", headers={"Range": "bytes=0-150"})
 
 		d = html.decode("utf8").split("\n")
 		self.info = "[Slashdiablo](/r/slashdiablo): %s players in %s games\n\n---\n\n" % (d[5][9:], d[4][6:])
@@ -93,16 +93,16 @@ class MumbleChecker(Thread):
 
 #create threads to handle slow (network-dependent) fetches
 threads = {}
-threads['bnet'] = BNetChecker()
-#threads['slashdiablo'] = SlashdiabloChecker()
-threads['mumble'] = MumbleChecker()
+threads["bnet"] = BNetChecker()
+#threads["slashdiablo"] = SlashdiabloChecker()
+threads["mumble"] = MumbleChecker()
 
 for t in threads:
 	threads[t].start()
 
 # Create reddit object and login
-r = praw.Reddit(user_agent='/r/diablo sidebar updater [mellort python module]')
-with open(credentials_file, 'r') as f:
+r = praw.Reddit(user_agent="/r/diablo sidebar updater [mellort python module]")
+with open(credentials_file, "r") as f:
 	user = f.read().rstrip()
 	passwd = f.read().rstrip()
 r.login(user, passwd)
@@ -111,16 +111,16 @@ subreddit = r.get_subreddit(subr_name)
 
 # Grab current settings
 subr_info = subreddit.get_settings()
-subr_desc = subr_info['description'][(subr_info['description'].find(sentinel)+len(sentinel)):]
+subr_desc = subr_info["description"][(subr_info["description"].find(sentinel)+len(sentinel)):]
 
 # There has to be a way to get rid of the HTMLParser ;__;
 HP = html.parser.HTMLParser()
 subr_desc = HP.unescape(subr_desc)
 
-with open('/tmp/irc_diablo_size', 'r') as f:
+with open("/tmp/irc_diablo_size", "r") as f:
 	irc_size = f.read()
 
-lastUpdated = "[Last updated at " + time.strftime('%H:%M:%S UTC', time.gmtime()) + '](/smallText)'
+lastUpdated = "[Last updated at " + time.strftime("%H:%M:%S UTC", time.gmtime()) + "](/smallText)"
 
 # Wait for threads to finish, if they haven't already
 for t in threads:
@@ -165,12 +165,12 @@ $lastUpdated
 
 $sentinel$subr_desc""")
 newDescription = newDescription.substitute(
-	am=threads['bnet'].am,
-	eu=threads['bnet'].eu,
-	asia=threads['bnet'].asia,
-	alert=threads['bnet'].status,
-	mumble_users=threads['mumble'].num_users,
-	mumble_max=threads['mumble'].max_users,
+	am=threads["bnet"].am,
+	eu=threads["bnet"].eu,
+	asia=threads["bnet"].asia,
+	alert=threads["bnet"].status,
+	mumble_users=threads["mumble"].num_users,
+	mumble_max=threads["mumble"].max_users,
 	irc_size=irc_size,
 	lastUpdated=lastUpdated,
 	sentinel=str(sentinel),
