@@ -51,7 +51,6 @@ class BNetChecker(Thread):
 		status_response["am"] = b.childNodes[1].childNodes[1].childNodes[3].childNodes[1].childNodes[1]._attrs["class"].nodeValue.split()[1]
 		status_response["eu"] = b.childNodes[3].childNodes[1].childNodes[3].childNodes[1].childNodes[1]._attrs["class"].nodeValue.split()[1]
 		status_response["as"] = b.childNodes[5].childNodes[1].childNodes[3].childNodes[1].childNodes[1]._attrs["class"].nodeValue.split()[1]
-		#self.status = 'Diablo III game server status (v. ' + client_ver_string + ')'
 		self.am = 'AM: ' + ('[online](/bnetOnline "' + bnet_build['enus'] + ', ' + client_build['enus'] + '")') if status_response["am"] == 'up' else '[Offline](/bnetOffline)'
 		self.eu = '|EU: ' + (('[online](/bnetOnline "' + bnet_build['engb'] + ', ' + client_build['engb'] + '")') if status_response["eu"] == 'up' else '[Offline](/bnetOffline)')
 		self.asia = '|AS: ' + (('[online](/bnetOnline "' + bnet_build['zhtw'] + ', ' + client_build['zhtw'] + '")') if status_response["as"] == 'up' else '[Offline](/bnetOffline)')
