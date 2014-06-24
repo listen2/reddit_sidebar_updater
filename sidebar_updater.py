@@ -34,6 +34,7 @@ def time_to_dhms(ti):
 
 def time_left(ti):
 	(days, hours, mins, secs) = time_to_dhms(ti)
+	"""
 	if secs < 0:
 		return "has launched!"
 	elif mins < 60:
@@ -42,6 +43,11 @@ def time_left(ti):
 		return "launch in %s hours" % (hours)
 	else:
 		return "launch in %s days" % (days + 1)
+	"""
+	if days == 0:
+		return "no longer required!"
+	else:
+		return "required for %i more days" % (days)
 
 class BNetChecker(Thread):
 	"""
@@ -100,11 +106,24 @@ class BNetChecker(Thread):
 
 		for r in ["am", "eu", "as"]:
 			if not status_response[r] == "up":
-				resp, alertMessage = h.request(other_regions[r]["url"], "GET")
+				alertMessage = urllib.request.urlopen(other_regions[r]["url"]).read()
 				if len(alertMessage) > 10:
 					alertMessage = self.trunc(alertMessage.decode("utf8"), other_regions[r]["url"])
 					self.status += "%s alert\n------------------\n\n%s\n\n" % (other_regions[r]["pretty"], alertMessage)
 				return
+
+class MumbleChecker(Thread):
+	"""
+	Gets the number of users currently in mumble
+	"""
+	def run(self):
+		#h = httplib2.Http(".cache", disable_ssl_certificate_validation=True)
+		#resp, j = h.request("http://clanforge.multiplay.co.uk/public/servers.pl?event=Online;opt=ServerXml;serverid=140233", "GET")
+		j = urllib.request.urlopen("https://clanforge.multiplay.co.uk/public/servers.pl?event=Online;opt=ServerXml;serverid=140233").read().decode("utf-8")
+
+		_mumble_dom = parseString(j)
+		self.num_users = _mumble_dom.getElementsByTagName("numplayers")[0].firstChild.data
+		self.max_users = _mumble_dom.getElementsByTagName("maxplayers")[0].firstChild.data
 
 class IRCChecker(Thread):
 	"""
@@ -169,7 +188,7 @@ class IRCChecker(Thread):
 			print("Send failed")
 
 		try:
-			self.mumble_size = " (%s users)" % (s.recv(4096).decode("utf8").split("\n", maxsplit=1)[0])
+			self.mumble_size = " (%s users)" % (s.recv(4096).decode("utf8").split("\n", 1)[0])
 		except socket.timeout:
 			self.mumble_size = ""
 
@@ -178,7 +197,7 @@ class IRCChecker(Thread):
 for g in rules:
 	#create threads to handle slow (network-dependent) fetches
 	threads = {}
-	threads["bnet"] = BNetChecker()
+	#threads["bnet"] = BNetChecker()
 	threads["irc"] = IRCChecker()
 
 	for t in threads:
@@ -197,26 +216,50 @@ for g in rules:
 
 	# Calculate time until release.
 	#secs = int(1337065200 - time.time())+3600 # 15 May 2012 00:00:00 PDT # Add 3600 because it truncates; this simulates a round up.
-	end = 1395705600
-	total_seconds = 9158400
-	releaseDateCounter = "[Reaper of Souls %s](/releaseCountdown)\n\n" % time_left(end)
-	percentage = int(((time.time() - 1387411200) / (total_seconds)) * 10)*10
+	end = 1396915200
+	total_seconds = 1209600
+	releaseDateCounter = "[Spoiler tags %s](/releaseCountdown)\n\n" % time_left(end)
+	percentage = int(((time.time() - 1395723000) / (total_seconds)) * 10)*10
 	releaseDateCounter += "[%s%%](/%sp)[%s%%](/%sn)\n\n" % (percentage, percentage, 100-percentage, 100-percentage)
 
 	#releaseDateCounter += "[Diablo 3 Europe " + time_left("eu") + "](/releaseCountdown)\n\n"
 	#releaseDateCounter += "[Diablo 3 Asia " + time_left("sea") + "](/releaseCountdown)\n\n"
 
-	with open("/tmp/rdiablo_thread_gear_tid", "r") as f:
-		tid_gear = f.read().rstrip()
+	try:
+		with open("/tmp/diablo_thread_gear_tid", "r") as f:
+			tid_gear = f.read().rstrip()
+	except IOError:
+		tid_gear = ""
 
-	with open("/tmp/rdiablo_thread_loot_tid", "r") as f:
-		tid_loot = f.read().rstrip()
+	try:
+		with open("/tmp/diablo_thread_loot_tid", "r") as f:
+			tid_loot = f.read().rstrip()
+	except IOError:
+		tid_loot = ""
 
-	with open("/tmp/rdiablo_thread_questions_tid", "r") as f:
-		tid_questions = f.read().rstrip()
+	try:
+		with open("/tmp/diablo_thread_questions_tid", "r") as f:
+			tid_questions = f.read().rstrip()
+	except IOError:
+		tid_questions = ""
 
-	with open("/tmp/rdiablo_thread_challenge_tid", "r") as f:
-		tid_challenge = f.read().rstrip()
+	try:
+		with open("/tmp/diablo_thread_challenge_tid", "r") as f:
+			tid_challenge = f.read().rstrip()
+	except IOError:
+		tid_challenge = ""
+
+	try:
+		with open("/tmp/diablo_thread_transmog_tid", "r") as f:
+			tid_transmog = f.read().rstrip()
+	except IOError:
+		tid_transmog = ""
+
+	try:
+		with open("/tmp/diablo_thread_lfg_tid", "r") as f:
+			tid_lfg = f.read().rstrip()
+	except IOError:
+		tid_lfg = ""
 
 	lastUpdated = "[Last updated at " + time.strftime("%H:%M:%S UTC", time.gmtime()) + "](/smallText)"
 
@@ -231,10 +274,6 @@ for g in rules:
 
 	newDescription = newDescription.substitute(
 		release=releaseDateCounter,
-		am=threads["bnet"].am,
-		eu=threads["bnet"].eu,
-		asia=threads["bnet"].asia,
-		alert=threads["bnet"].status,
 		irc_size=threads["irc"].irc_size,
 		mumble_size=threads["irc"].mumble_size,
 		lastUpdated=lastUpdated,
@@ -242,6 +281,8 @@ for g in rules:
 		loot=tid_loot,
 		questions=tid_questions,
 		challenge=tid_challenge,
+		transmog=tid_transmog,
+		lfg=tid_lfg,
 		sentinel=str(g["sentinel"]),
 		subr_desc=subr_desc)
 	r.wiki_write(g["rname"], "config/sidebar", newDescription)
